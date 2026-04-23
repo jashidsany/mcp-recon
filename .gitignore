@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.pyright/
+
+# build / dist
+build/
+dist/
+*.egg-info/
+
+# venvs
+.venv/
+venv/
+
+# scan artifacts (never commit)
+mcp-scan-artifacts/
+*.artifacts/
+
+# editor / os
+.vscode/
+.idea/
+*.swp
+.DS_Store
