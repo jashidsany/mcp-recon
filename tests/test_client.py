@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mcp_scan.client import MCPClient
+from mcp_recon.client import MCPClient
 
 
 def test_parse_sse_extracts_json_payload():

@@ -58,7 +58,7 @@ class MCPClient:
     timeout: float = 30.0
     proxy: str | None = None
     inter_request_delay_ms: int = 100
-    user_agent: str = "mcp-scan/0.1.0"
+    user_agent: str = "mcp-recon/0.1.0"
     token: str | None = None
     include_secrets: bool = False
     exchanges: list[HttpExchange] = field(default_factory=list)
@@ -193,7 +193,7 @@ class MCPClient:
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "mcp-scan", "version": "0.1.0"},
+                "clientInfo": {"name": "mcp-recon", "version": "0.1.0"},
             },
         )
 

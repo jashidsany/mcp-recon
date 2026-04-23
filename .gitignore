@@ -14,7 +14,7 @@ dist/
 venv/
 
 # scan artifacts (never commit)
-mcp-scan-artifacts/
+mcp-recon-artifacts/
 *.artifacts/
 
 # editor / os

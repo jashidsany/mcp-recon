@@ -5,8 +5,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, ScanConfig
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, ScanConfig
 
 
 async def check_fingerprint(

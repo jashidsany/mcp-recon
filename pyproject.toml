@@ -1,5 +1,5 @@
 [project]
-name = "mcp-scan"
+name = "mcp-recon"
 version = "0.1.0"
 description = "Reconnaissance and known-issue scanner for Model Context Protocol (MCP) servers"
 readme = "README.md"
@@ -36,20 +36,20 @@ dev = [
 ]
 
 [project.scripts]
-mcp-scan = "mcp_scan.__main__:app"
+mcp-recon = "mcp_recon.__main__:app"
 
 [project.urls]
-Homepage = "https://github.com/jashidsany/mcp-scan"
-Repository = "https://github.com/jashidsany/mcp-scan"
-Issues = "https://github.com/jashidsany/mcp-scan/issues"
-"Security Policy" = "https://github.com/jashidsany/mcp-scan/blob/main/SECURITY.md"
+Homepage = "https://github.com/jashidsany/mcp-recon"
+Repository = "https://github.com/jashidsany/mcp-recon"
+Issues = "https://github.com/jashidsany/mcp-recon/issues"
+"Security Policy" = "https://github.com/jashidsany/mcp-recon/blob/main/SECURITY.md"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mcp_scan"]
+packages = ["src/mcp_recon"]
 
 [tool.ruff]
 target-version = "py310"

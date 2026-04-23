@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from mcp_scan.models import ScanConfig
-from mcp_scan.runner import run_scan
+from mcp_recon.models import ScanConfig
+from mcp_recon.runner import run_scan
 
 from .mock_server import MockServer
 from .test_checks import _rpc_handler_for_success

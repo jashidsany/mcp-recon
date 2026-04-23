@@ -7,14 +7,14 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from mcp_scan.checks import (
+from mcp_recon.checks import (
     check_auth_header_hygiene,
     check_cors_policy,
     check_tool_description_anomalies,
     check_transport_hygiene,
 )
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckStatus, ScanConfig, Severity
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckStatus, ScanConfig, Severity
 
 
 def _make_server(handler_cls):

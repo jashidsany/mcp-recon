@@ -10,10 +10,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from mcp_scan import SCHEMA_VERSION, __version__
-from mcp_scan.checks import REGISTRY
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, ScanConfig, ScanReport
+from mcp_recon import SCHEMA_VERSION, __version__
+from mcp_recon.checks import REGISTRY
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, ScanConfig, ScanReport
 
 
 def _iso_now() -> str:

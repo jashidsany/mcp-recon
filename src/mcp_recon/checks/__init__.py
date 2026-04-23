@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, ScanConfig
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, ScanConfig
 
 from .auth_header_hygiene import check_auth_header_hygiene
 from .cors_policy import check_cors_policy

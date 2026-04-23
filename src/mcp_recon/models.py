@@ -80,7 +80,7 @@ class ScanConfig:
     proxy: str | None = None
     token: str | None = None
     include_secrets: bool = False
-    user_agent: str = "mcp-scan/0.1.0 (+https://github.com/jashidsany/mcp-scan)"
+    user_agent: str = "mcp-recon/0.1.0 (+https://github.com/jashidsany/mcp-recon)"
 
     def redacted(self) -> dict[str, Any]:
         d = asdict(self)

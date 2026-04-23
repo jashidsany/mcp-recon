@@ -12,8 +12,8 @@ import time
 import unicodedata
 from typing import Any
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
 CONTROL_CATEGORIES = {"Cc", "Cf"}
 ZERO_WIDTH_CODEPOINTS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}

@@ -1,6 +1,6 @@
 """Scope-binding probe.
 
-Requires an access token (--token or MCP_SCAN_TOKEN). Given a token, the
+Requires an access token (--token or MCP_RECON_TOKEN). Given a token, the
 check attempts to invoke each tool the server advertises, interpreting
 the response codes to detect whether the token's scope actually constrains
 which tools it can call.
@@ -21,8 +21,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
 
 async def check_scope_binding(
@@ -37,7 +37,7 @@ async def check_scope_binding(
             name="scope-binding",
             status=CheckStatus.SKIPPED_MISSING_INPUT,
             duration_ms=int((time.monotonic() - t0) * 1000),
-            notes=["no access token provided; run with --token <token> or MCP_SCAN_TOKEN env var"],
+            notes=["no access token provided; run with --token <token> or MCP_RECON_TOKEN env var"],
         )
 
     tools = context.get("tools_full") or []

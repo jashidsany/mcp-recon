@@ -12,8 +12,8 @@ import time
 from typing import Any
 from urllib.parse import urlparse
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
 PROBE_METHODS = ["GET", "OPTIONS", "DELETE", "PUT", "PATCH"]
 

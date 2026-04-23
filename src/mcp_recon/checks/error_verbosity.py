@@ -6,8 +6,8 @@ import re
 import time
 from typing import Any
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
 STACK_TRACE_MARKERS = [
     "Traceback (most recent call last)",

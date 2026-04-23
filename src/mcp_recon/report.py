@@ -10,7 +10,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from mcp_scan.models import CheckStatus, ScanReport, Severity
+from mcp_recon.models import CheckStatus, ScanReport, Severity
 
 SEVERITY_STYLE = {
     Severity.INFO: "dim",
@@ -36,7 +36,7 @@ def render_human(report: ScanReport) -> str:
     header.append(f"started:    {report.started_at}\n")
     header.append(f"schema:     {report.schema_version}    tool: {report.tool_version}\n")
     header.append(f"duration:   {report.duration_ms} ms")
-    console.print(Panel(header, title=f"mcp-scan v{report.tool_version}", border_style="blue"))
+    console.print(Panel(header, title=f"mcp-recon v{report.tool_version}", border_style="blue"))
 
     obs_count = 0
     for check in report.checks:
@@ -98,7 +98,7 @@ def render_json(report: ScanReport) -> str:
 
 def render_markdown(report: ScanReport) -> str:
     lines: list[str] = []
-    lines.append(f"# mcp-scan report: `{report.target}`")
+    lines.append(f"# mcp-recon report: `{report.target}`")
     lines.append("")
     lines.append(f"- tool version: `{report.tool_version}`")
     lines.append(f"- schema: `{report.schema_version}`")

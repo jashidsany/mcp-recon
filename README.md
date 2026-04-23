@@ -1,17 +1,17 @@
-# mcp-scan
+# mcp-recon
 
 Reconnaissance and known-issue scanner for Model Context Protocol (MCP) servers. Think of it as `nmap` for MCP: it fingerprints what's there and flags behavior patterns associated with publicly disclosed vulnerability classes. It does not declare a server "safe" or "unsafe" - it reports observations, and the operator interprets them in context.
 
 ## Use with authorization only
 
-Only run `mcp-scan` against servers you own or have explicit permission to test. Unauthorized scanning may violate computer misuse laws in your jurisdiction. The tool is rate-limited by default and refuses to send state-mutating calls, but responsibility for scope is on the operator.
+Only run `mcp-recon` against servers you own or have explicit permission to test. Unauthorized scanning may violate computer misuse laws in your jurisdiction. The tool is rate-limited by default and refuses to send state-mutating calls, but responsibility for scope is on the operator.
 
 ## Install
 
 ```bash
-pipx install mcp-scan
+pipx install mcp-recon
 # or
-pip install --user mcp-scan
+pip install --user mcp-recon
 ```
 
 Python 3.10+ required.
@@ -20,19 +20,19 @@ Python 3.10+ required.
 
 ```bash
 # Human-readable scan of an MCP endpoint
-mcp-scan scan https://example.com/api/mcp
+mcp-recon scan https://example.com/api/mcp
 
 # JSON output for automation
-mcp-scan scan https://example.com/api/mcp --output json
+mcp-recon scan https://example.com/api/mcp --output json
 
 # Markdown output for dropping into bug-bounty reports
-mcp-scan scan https://example.com/api/mcp --output markdown
+mcp-recon scan https://example.com/api/mcp --output markdown
 
 # Scope-binding probe on an OAuth-gated server
-MCP_SCAN_TOKEN=<access-token> mcp-scan scan https://example.com/api/mcp
+MCP_RECON_TOKEN=<access-token> mcp-recon scan https://example.com/api/mcp
 
 # Route requests through Burp / mitmproxy
-mcp-scan scan https://example.com/api/mcp --proxy http://127.0.0.1:8080
+mcp-recon scan https://example.com/api/mcp --proxy http://127.0.0.1:8080
 ```
 
 Exit codes:
@@ -69,7 +69,7 @@ Each flagged observation ships with:
 
 ## Artifacts
 
-Every scan writes a directory of raw JSON artifacts to `./mcp-scan-artifacts/<target>_<timestamp>/`:
+Every scan writes a directory of raw JSON artifacts to `./mcp-recon-artifacts/<target>_<timestamp>/`:
 
 ```
 report.json        structured result (schema-versioned)

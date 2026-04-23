@@ -11,8 +11,8 @@ import re
 import time
 from typing import Any
 
-from mcp_scan.client import MCPClient
-from mcp_scan.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
+from mcp_recon.client import MCPClient
+from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
 INFRA_HINTS = re.compile(r"(aws|gcp|azure|kubernetes|k8s|docker|internal|staging|debug|traceback|exception|panic)", re.I)
 PATH_HINTS = re.compile(r"(?:^|[\s\"'(<>])(/[A-Za-z0-9_.\-/]+)")
