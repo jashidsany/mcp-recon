@@ -129,6 +129,7 @@ class Transport(Protocol):
         rid: str | None = None,
     ) -> Exchange:
         """Send a JSON-RPC request and return the exchange record."""
+        ...  # pragma: no cover - Protocol method
 
 
 # ---------------------------------------------------------------------------
