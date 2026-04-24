@@ -80,7 +80,15 @@ class ScanConfig:
     proxy: str | None = None
     token: str | None = None
     include_secrets: bool = False
-    user_agent: str = "mcp-recon/0.1.0 (+https://github.com/jashidsany/mcp-recon)"
+    user_agent: str = "mcp-recon/0.2.0 (+https://github.com/jashidsany/mcp-recon)"
+    # When set, run the MCP server as a subprocess (stdio transport) instead
+    # of POSTing to `target`. The positional `target` becomes a free-form
+    # label used for artifact naming.
+    stdio_command: str | None = None
+
+    @property
+    def transport_kind(self) -> str:
+        return "stdio" if self.stdio_command else "http"
 
     def redacted(self) -> dict[str, Any]:
         d = asdict(self)

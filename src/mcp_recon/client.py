@@ -1,100 +1,91 @@
-"""Minimal MCP-over-HTTP JSON-RPC 2.0 client.
+"""MCP JSON-RPC client.
 
-Handles both `application/json` and `text/event-stream` responses because
-MCP's Streamable HTTP transport may return either.
-
-Records every request/response for artifact output.
+Wraps a Transport (HTTP or stdio) and exposes the MCP methods the checks
+need. Stdio-only targets don't have a URL, so callers should handle that
+via the transport.kind attribute.
 """
 
 from __future__ import annotations
 
-import asyncio
-import json
-import time
-import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
-import httpx
+from mcp_recon.transport import (
+    Exchange,
+    HttpExchange,
+    HttpTransport,
+    StdioExchange,
+    StdioTransport,
+    TransportKind,
+)
 
-
-@dataclass
-class HttpExchange:
-    """One recorded request/response pair."""
-
-    ts: float
-    method: str
-    url: str
-    request_headers: dict[str, str]
-    request_body: Any
-    status: int | None
-    response_headers: dict[str, str]
-    response_body_preview: str
-    response_json: Any | None
-    duration_ms: int
-    error: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "ts": self.ts,
-            "method": self.method,
-            "url": self.url,
-            "request_headers": self.request_headers,
-            "request_body": self.request_body,
-            "status": self.status,
-            "response_headers": self.response_headers,
-            "response_body_preview": self.response_body_preview,
-            "response_json": self.response_json,
-            "duration_ms": self.duration_ms,
-            "error": self.error,
-        }
+# Re-export for backward compatibility with v0.1 callers.
+__all__ = [
+    "Exchange",
+    "HttpExchange",
+    "HttpTransport",
+    "MCPClient",
+    "StdioExchange",
+    "StdioTransport",
+    "TransportKind",
+]
 
 
 @dataclass
 class MCPClient:
-    """JSON-RPC 2.0 client for MCP over HTTP."""
+    """MCP client that speaks JSON-RPC 2.0 over a transport.
 
-    target: str
+    Historically this was HTTP-only; v0.2 adds stdio support via the
+    `transport` field. The legacy constructor (`target=...`) still works
+    and continues to build an HTTP transport under the hood.
+    """
+
+    target: str = ""
     timeout: float = 30.0
     proxy: str | None = None
     inter_request_delay_ms: int = 100
-    user_agent: str = "mcp-recon/0.1.0"
+    user_agent: str = "mcp-recon/0.2.0"
     token: str | None = None
     include_secrets: bool = False
-    exchanges: list[HttpExchange] = field(default_factory=list)
+    transport: HttpTransport | StdioTransport | None = None
 
-    _last_request_ts: float = 0.0
+    def __post_init__(self) -> None:
+        # Legacy path: if no transport supplied, and target looks like a URL,
+        # build an HttpTransport. This keeps the existing tests and callers
+        # working unchanged.
+        if self.transport is None:
+            self.transport = HttpTransport(
+                target=self.target,
+                timeout=self.timeout,
+                proxy=self.proxy,
+                inter_request_delay_ms=self.inter_request_delay_ms,
+                user_agent=self.user_agent,
+                token=self.token,
+                include_secrets=self.include_secrets,
+            )
 
-    async def _throttle(self) -> None:
-        if self.inter_request_delay_ms <= 0:
-            return
-        delay = self.inter_request_delay_ms / 1000.0
-        elapsed = time.monotonic() - self._last_request_ts
-        if elapsed < delay:
-            await asyncio.sleep(delay - elapsed)
+    @property
+    def exchanges(self) -> list[Exchange]:
+        assert self.transport is not None
+        return self.transport.exchanges
 
+    @property
+    def kind(self) -> str:
+        assert self.transport is not None
+        return self.transport.kind
+
+    # ------------------------------------------------------------------
+    # Legacy HTTP-specific shims so existing checks keep working.
+    # ------------------------------------------------------------------
     def _redact_headers(self, headers: dict[str, str]) -> dict[str, str]:
-        if self.include_secrets:
-            return dict(headers)
-        redacted = {}
-        for k, v in headers.items():
-            if k.lower() in {"authorization", "cookie", "x-api-key", "x-shopify-access-token"}:
-                redacted[k] = "[REDACTED]"
-            else:
-                redacted[k] = v
-        return redacted
+        if isinstance(self.transport, HttpTransport):
+            return self.transport._redact_headers(headers)
+        return dict(headers)
 
     def _build_headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
-        h = {
-            "Content-Type": "application/json",
-            "Accept": "application/json, text/event-stream",
-            "User-Agent": self.user_agent,
-        }
-        if self.token:
-            h["Authorization"] = f"Bearer {self.token}"
-        if extra:
-            h.update(extra)
-        return h
+        if isinstance(self.transport, HttpTransport):
+            return self.transport._build_headers(extra)
+        return {}
 
     async def _request(
         self,
@@ -103,105 +94,72 @@ class MCPClient:
         headers: dict[str, str],
         body: Any | None = None,
     ) -> HttpExchange:
-        await self._throttle()
-        t0 = time.monotonic()
-        status: int | None = None
-        resp_headers: dict[str, str] = {}
-        resp_preview = ""
-        resp_json: Any | None = None
-        err: str | None = None
-        try:
-            async with httpx.AsyncClient(
-                timeout=self.timeout,
-                proxy=self.proxy,
-                follow_redirects=True,
-            ) as c:
-                r = await c.request(
-                    method,
-                    url,
-                    headers=headers,
-                    content=json.dumps(body) if body is not None else None,
-                )
-            status = r.status_code
-            resp_headers = dict(r.headers)
-            body_text = r.text
-            resp_preview = body_text[:4000]
-            ct = r.headers.get("content-type", "")
-            if "application/json" in ct:
-                try:
-                    resp_json = r.json()
-                except ValueError:
-                    resp_json = None
-            elif "text/event-stream" in ct:
-                resp_json = self._parse_sse(body_text)
-        except Exception as e:
-            err = f"{type(e).__name__}: {e}"
-        finally:
-            self._last_request_ts = time.monotonic()
+        if not isinstance(self.transport, HttpTransport):
+            # Non-HTTP transport: synthesize a stub exchange so checks don't crash.
+            return HttpExchange(
+                ts=0.0,
+                method=method,
+                url=url,
+                request_headers=headers,
+                request_body=body,
+                status=None,
+                response_headers={},
+                response_body_preview="",
+                response_json=None,
+                duration_ms=0,
+                error="HTTP request called on a non-HTTP transport",
+            )
+        return await self.transport._request(method, url, headers, body)
 
-        elapsed_ms = int((time.monotonic() - t0) * 1000)
-        ex = HttpExchange(
-            ts=time.time(),
-            method=method,
-            url=url,
-            request_headers=self._redact_headers(headers),
-            request_body=body,
-            status=status,
-            response_headers=resp_headers,
-            response_body_preview=resp_preview,
-            response_json=resp_json,
-            duration_ms=elapsed_ms,
-            error=err,
-        )
-        self.exchanges.append(ex)
-        return ex
-
+    # ------------------------------------------------------------------
+    # MCP protocol convenience methods (transport-agnostic)
+    # ------------------------------------------------------------------
+    # Pass-through for legacy test suite that calls MCPClient._parse_sse.
     @staticmethod
-    def _parse_sse(body: str) -> Any | None:
-        """Extract the first JSON payload from a text/event-stream body."""
-        for line in body.splitlines():
-            if line.startswith("data:"):
-                payload = line[len("data:"):].strip()
-                if not payload:
-                    continue
-                try:
-                    return json.loads(payload)
-                except ValueError:
-                    continue
-        return None
+    def _parse_sse(body: str) -> Any:
+        return HttpTransport._parse_sse(body)
 
     async def rpc(
         self,
         method: str,
         params: dict[str, Any] | None = None,
         rid: str | None = None,
-    ) -> HttpExchange:
-        body = {
-            "jsonrpc": "2.0",
-            "id": rid or str(uuid.uuid4()),
-            "method": method,
-            "params": params or {},
-        }
-        return await self._request("POST", self.target, self._build_headers(), body)
+    ) -> Exchange:
+        assert self.transport is not None
+        return await self.transport.rpc(method, params, rid)
 
     async def get(self, url: str) -> HttpExchange:
-        return await self._request("GET", url, self._build_headers())
+        if not isinstance(self.transport, HttpTransport):
+            return HttpExchange(
+                ts=0.0,
+                method="GET",
+                url=url,
+                request_headers={},
+                request_body=None,
+                status=None,
+                response_headers={},
+                response_body_preview="",
+                response_json=None,
+                duration_ms=0,
+                error="GET called on a non-HTTP transport",
+            )
+        return await self.transport.get(url)
 
-    async def initialize(self) -> HttpExchange:
+    async def initialize(self) -> Exchange:
         return await self.rpc(
             "initialize",
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "mcp-recon", "version": "0.1.0"},
+                "clientInfo": {"name": "mcp-recon", "version": "0.2.0"},
             },
         )
 
-    async def tools_list(self) -> HttpExchange:
+    async def tools_list(self) -> Exchange:
         return await self.rpc("tools/list")
 
-    async def resources_list(self) -> HttpExchange:
+    async def resources_list(self) -> Exchange:
         return await self.rpc("resources/list")
 
-    async def prompts_list(self) -> HttpExchange:
+    async def prompts_list(self) -> Exchange:
         return await self.rpc("prompts/list")

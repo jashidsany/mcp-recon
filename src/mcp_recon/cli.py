@@ -43,10 +43,11 @@ def main(
 
 @app.command()
 def scan(
-    target: str = typer.Argument(..., help="Full MCP endpoint URL, e.g. https://example.com/api/mcp"),
+    target: str = typer.Argument(None, help="MCP endpoint URL for HTTP, or a free-form label when --stdio is set"),
+    stdio: str = typer.Option(None, "--stdio", help="Run the MCP server as a subprocess (stdio transport). Provide the command line, e.g. --stdio 'uvx mcp-server-fetch'."),
     output: str = typer.Option("human", "--output", "-o", help="Output format: human, json, markdown"),
-    token: str = typer.Option(None, "--token", help="OAuth access token for scope-binding probe (or MCP_RECON_TOKEN env var)"),
-    proxy: str = typer.Option(None, "--proxy", help="HTTP proxy URL (overrides HTTPS_PROXY env)"),
+    token: str = typer.Option(None, "--token", help="OAuth access token for scope-binding probe (or MCP_RECON_TOKEN env var). HTTP mode only."),
+    proxy: str = typer.Option(None, "--proxy", help="HTTP proxy URL (overrides HTTPS_PROXY env). HTTP mode only."),
     timeout: float = typer.Option(30.0, "--timeout", help="Per-request timeout in seconds"),
     inter_request_delay_ms: int = typer.Option(100, "--delay-ms", help="Delay between requests in ms (default 100; use 0 for --aggressive)"),
     aggressive: bool = typer.Option(False, "--aggressive", help="Remove inter-request delay (equivalent to --delay-ms 0)"),
@@ -54,9 +55,18 @@ def scan(
     no_artifacts: bool = typer.Option(False, "--no-artifacts", help="Skip writing raw artifact files"),
     include_secrets: bool = typer.Option(False, "--include-secrets", help="Do not redact Authorization / Cookie / API key headers in artifacts (USE WITH CAUTION)"),
 ) -> None:
-    """Scan one MCP server."""
+    """Scan one MCP server over HTTP or stdio."""
     resolved_token = token or os.environ.get("MCP_RECON_TOKEN")
     resolved_proxy = proxy or os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+
+    if not stdio and not target:
+        ERR.print("[red]error:[/red] either a URL target or --stdio \"command\" is required.")
+        raise typer.Exit(code=3)
+
+    # When using --stdio, target is an optional label. Default to the first
+    # token of the command so artifacts have a sensible directory name.
+    if stdio and not target:
+        target = stdio.split()[0] if stdio.split() else "stdio-target"
 
     delay = 0 if aggressive else inter_request_delay_ms
 
@@ -67,6 +77,7 @@ def scan(
         proxy=resolved_proxy,
         token=resolved_token,
         include_secrets=include_secrets,
+        stdio_command=stdio,
     )
 
     try:

@@ -19,8 +19,13 @@ Python 3.10+ required.
 ## Quick start
 
 ```bash
-# Human-readable scan of an MCP endpoint
+# Scan an HTTP MCP endpoint
 mcp-recon scan https://example.com/api/mcp
+
+# Scan a stdio MCP server (spawn as subprocess, JSON-RPC over stdin/stdout)
+mcp-recon scan --stdio "mcp-server-fetch"
+mcp-recon scan --stdio "node /path/to/memory-server/dist/index.js /tmp/mem.json"
+mcp-recon scan --stdio "uvx mcp-server-time"
 
 # JSON output for automation
 mcp-recon scan https://example.com/api/mcp --output json
@@ -31,9 +36,11 @@ mcp-recon scan https://example.com/api/mcp --output markdown
 # Scope-binding probe on an OAuth-gated server
 MCP_RECON_TOKEN=<access-token> mcp-recon scan https://example.com/api/mcp
 
-# Route requests through Burp / mitmproxy
+# Route requests through Burp / mitmproxy (HTTP mode only)
 mcp-recon scan https://example.com/api/mcp --proxy http://127.0.0.1:8080
 ```
+
+When `--stdio` is set, the five HTTP-specific checks (`transport-hygiene`, `cors-policy`, `auth-header-hygiene`, `discovery-consistency`, `scope-binding`) are marked `skipped-not-applicable`. The remaining five checks (fingerprint, error-verbosity, tool-description-anomalies, multi-request-pattern, undocumented-capabilities) run over the stdio transport.
 
 Exit codes:
 

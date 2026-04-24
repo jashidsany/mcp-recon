@@ -19,27 +19,34 @@ from typing import Any
 from mcp_recon.client import MCPClient
 from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
-URL_PARAM_HINTS = re.compile(r"\b(url|uri|link|endpoint|fetch|source|target|webhook|callback)\b", re.I)
+# Narrow set of tokens that, when they appear as a parameter *name* or the
+# JSON-schema *format*, strongly imply a URL-valued argument. Keywords like
+# "source", "target", or "fetch" are too broad (trigger on timezone names,
+# file paths, etc.) and are intentionally excluded.
+URL_NAME_HINTS = re.compile(r"(?i)^(url|uri|link|endpoint|webhook|callback|href|address)s?$|url$|uri$")
+URL_FORMATS = {"uri", "url", "uri-reference", "uri-template", "iri"}
 
 
 def _scan_schema_for_url_params(schema: dict[str, Any] | None) -> list[str]:
+    """Return the names of properties that look like URL-typed arguments.
+
+    The check is conservative: we only flag parameters whose name matches a
+    URL-like token, or whose JSON-schema `format` is a URL format. We do
+    *not* scan descriptions because human prose frequently mentions
+    "source"/"target"/"fetch" without implying a URL.
+    """
     if not isinstance(schema, dict):
         return []
     found: list[str] = []
     props = schema.get("properties") or {}
     if isinstance(props, dict):
         for name, spec in props.items():
-            name_hit = URL_PARAM_HINTS.search(name or "")
-            if name_hit:
+            if name and URL_NAME_HINTS.search(name):
                 found.append(name)
                 continue
             if isinstance(spec, dict):
                 fmt = (spec.get("format") or "").lower()
-                if fmt in {"uri", "url"}:
-                    found.append(name)
-                    continue
-                desc = spec.get("description") or ""
-                if URL_PARAM_HINTS.search(desc):
+                if fmt in URL_FORMATS:
                     found.append(name)
     return found
 

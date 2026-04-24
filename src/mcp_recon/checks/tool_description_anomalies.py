@@ -18,6 +18,8 @@ from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, 
 CONTROL_CATEGORIES = {"Cc", "Cf"}
 ZERO_WIDTH_CODEPOINTS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
 BIDI_CODEPOINTS = {0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069}
+# Whitespace-adjacent control chars that are legitimate in descriptions.
+BENIGN_CONTROL = {0x09, 0x0A, 0x0D}  # tab, LF, CR
 
 
 def _inspect(text: str) -> dict[str, Any]:
@@ -26,6 +28,8 @@ def _inspect(text: str) -> dict[str, Any]:
     bidi = 0
     for ch in text:
         cp = ord(ch)
+        if cp in BENIGN_CONTROL:
+            continue
         if cp in ZERO_WIDTH_CODEPOINTS:
             zero_width += 1
         elif cp in BIDI_CODEPOINTS:

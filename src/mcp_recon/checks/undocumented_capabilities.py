@@ -13,13 +13,16 @@ from typing import Any
 from mcp_recon.client import MCPClient
 from mcp_recon.models import CheckResult, CheckStatus, Observation, ScanConfig, Severity
 
+# Methods defined in the MCP spec that are *optional* on the server side.
+# We intentionally omit `ping` because the spec requires every server to
+# respond to it, so an unadvertised `ping` isn't a signal of anything.
+# Same reasoning excludes `notifications/initialized` (a client-to-server
+# notification with no response expected).
 PROBE_METHODS = [
-    "ping",
     "completion/complete",
     "logging/setLevel",
     "roots/list",
     "sampling/createMessage",
-    "notifications/initialized",
     "resources/templates/list",
     "resources/subscribe",
 ]
